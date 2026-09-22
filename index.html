@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workforce Capability Navigator — Field Metering & Manual Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#F1F2F0;
+    --panel:#FFFFFF;
+    --ink:#151A1F;
+    --muted:#5A616B;
+    --line:#D9DBD6;
+    --line-strong:#B9BDB6;
+    --ready:#1F6F63;
+    --ready-bg:#E7F0EE;
+    --reskill:#B4791A;
+    --reskill-bg:#F5EBDA;
+    --review:#A23B2E;
+    --review-bg:#F5E4E1;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--canvas);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  a{color:inherit;}
+  ::selection{background:#cfe3de;}
+
+  /* ---------- shell ---------- */
+  .shell{max-width:1180px;margin:0 auto;padding:0 28px 80px;}
+  header.topbar{
+    border-bottom:1px solid var(--line);
+    padding:20px 28px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--muted);
+    border:1px solid var(--line-strong);
+    padding:2px 6px;
+    border-radius:3px;
+  }
+  .brand h1{font-size:17px;font-weight:600;margin:0;letter-spacing:-0.01em;}
+  .brand .sub{color:var(--muted);font-size:13px;}
+  .disclaimer{font-size:12.5px;color:var(--muted);max-width:340px;text-align:right;}
+
+  /* ---------- breadcrumb (context hierarchy, not a tab bar) ---------- */
+  .crumbs{
+    padding:12px 28px;
+    font-size:13px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .crumbs button{
+    background:none;border:none;padding:0;font:inherit;color:var(--muted);
+  }
+  .crumbs button:hover{color:var(--ink);text-decoration:underline;}
+  .crumbs .sep{margin:0 8px;color:var(--line-strong);}
+  .crumbs .current{color:var(--ink);font-weight:600;}
+
+  main{padding-top:30px;}
+  h2.page-title{font-size:25px;font-weight:600;letter-spacing:-0.01em;margin:0 0 6px;}
+  p.page-lede{color:var(--muted);margin:0 0 28px;max-width:640px;}
+
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:13px;color:var(--muted);
+    background:none;border:none;padding:0;margin-bottom:18px;
+  }
+  .back-link:hover{color:var(--ink);}
+
+  /* ---------- stat / fact panels ---------- */
+  .fact-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:22px;}
+  .fact{background:var(--panel);padding:22px 20px;}
+  .fact .num{font-family:var(--mono);font-size:30px;font-weight:600;display:block;margin-bottom:4px;}
+  .fact .label{color:var(--muted);font-size:13px;}
+  .fact.tone-review .num{color:var(--review);}
+
+  .panel{background:var(--panel);border:1px solid var(--line);padding:24px;margin-bottom:20px;}
+  .panel h3{font-size:15px;font-weight:600;margin:0 0 14px;}
+
+  .tag{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:11.5px;font-weight:600;
+    padding:3px 8px;border-radius:3px;
+    font-family:var(--mono);
+  }
+  .tag.illustrative{background:#EFEFEB;color:var(--muted);border:1px solid var(--line-strong);}
+  .tag.fact{background:var(--ready-bg);color:var(--ready);}
+
+  .note{
+    font-size:13px;color:var(--muted);
+    border-left:2px solid var(--line-strong);
+    padding:10px 14px;background:#F8F8F6;
+  }
+
+  ul.illustrative-list{margin:12px 0 0;padding:0;list-style:none;}
+  ul.illustrative-list li{
+    padding:10px 0;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:14px;
+  }
+  ul.illustrative-list li:first-child{border-top:none;}
+
+  .cta-row{margin-top:8px;}
+  .btn{
+    background:var(--ink);color:#fff;border:1px solid var(--ink);
+    padding:11px 20px;font-size:14px;font-weight:500;border-radius:3px;
+  }
+  .btn:hover{background:#000;}
+  .btn.secondary{background:transparent;color:var(--ink);}
+  .btn.secondary:hover{background:var(--canvas);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn-group{display:flex;gap:10px;flex-wrap:wrap;}
+
+  /* ---------- filters ---------- */
+  .filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+  .filters select{
+    font-family:inherit;font-size:13px;padding:8px 10px;
+    border:1px solid var(--line-strong);border-radius:3px;background:#fff;color:var(--ink);
+  }
+  .filters .count{font-size:13px;color:var(--muted);margin-left:auto;}
+
+  /* ---------- table ---------- */
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--panel);}
+  table{border-collapse:collapse;width:100%;min-width:640px;}
+  th{
+    text-align:left;font-size:12px;color:var(--muted);font-weight:500;
+    padding:11px 16px;border-bottom:1px solid var(--line);background:#F8F8F6;
+  }
+  td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px;}
+  tbody tr{cursor:pointer;}
+  tbody tr:hover{background:#F8F8F6;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.mono{font-family:var(--mono);font-size:13px;}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 9px;border-radius:3px;}
+  .badge.ready{background:var(--ready-bg);color:var(--ready);}
+  .badge.reskill{background:var(--reskill-bg);color:var(--reskill);}
+  .badge.review{background:var(--review-bg);color:var(--review);}
+  .badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .conf{font-size:12.5px;color:var(--muted);}
+  .conf.High{color:var(--ready);}
+  .conf.Medium{color:var(--reskill);}
+  .conf.Low{color:var(--review);}
+
+  /* ---------- employee detail: master-detail shell ---------- */
+  .emp-shell{display:grid;grid-template-columns:252px 1fr;gap:24px;align-items:start;}
+  @media (max-width:780px){.emp-shell{grid-template-columns:1fr;}}
+
+  .emp-sidebar{background:var(--panel);border:1px solid var(--line);position:sticky;top:20px;}
+  .emp-sidebar .exit{
+    display:block;width:100%;text-align:left;padding:13px 18px;
+    border:none;border-bottom:1px solid var(--line);background:none;
+    font-family:inherit;font-size:13px;color:var(--muted);
+  }
+  .emp-sidebar .exit:hover{color:var(--ink);background:#F8F8F6;}
+
+  .emp-summary{padding:16px 18px;border-bottom:1px solid var(--line);}
+  .emp-summary .eid{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .emp-summary .ename{font-weight:600;font-size:15.5px;margin:3px 0 3px;}
+  .emp-summary .erole{font-size:12.5px;color:var(--muted);margin-bottom:10px;}
+
+  .emp-vsteps{display:flex;flex-direction:column;}
+  .emp-vsteps button{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 18px;border:none;border-bottom:1px solid var(--line);
+    background:none;text-align:left;font-family:inherit;font-size:13.5px;color:var(--muted);width:100%;
+  }
+  .emp-vsteps button:last-child{border-bottom:none;}
+  .emp-vsteps button .num{
+    font-family:var(--mono);font-size:11px;width:18px;height:18px;border-radius:50%;
+    border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  }
+  .emp-vsteps button.done{color:var(--ink);}
+  .emp-vsteps button.done .num{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .emp-vsteps button.active{color:var(--ink);font-weight:600;background:var(--canvas);}
+  .emp-vsteps button.active .num{background:var(--ready);color:#fff;border-color:var(--ready);}
+  .emp-vsteps button.locked{color:#B5B9B4;}
+  .emp-vsteps button:not(.locked):hover{background:#F8F8F6;}
+
+  .emp-content{min-width:0;}
+  .sub-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .sub-head .ctx{font-size:13px;color:var(--muted);}
+
+  /* ---------- profile ---------- */
+  .meta-line{color:var(--muted);font-size:13.5px;}
+  .cap-list{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);}
+  .cap-row{
+    display:grid;grid-template-columns:1fr 90px 110px 26px;gap:14px;align-items:center;
+    padding:14px 18px;border-bottom:1px solid var(--line);background:none;border-left:none;border-right:none;border-top:none;
+    width:100%;text-align:left;font-family:inherit;font-size:14px;color:inherit;
+  }
+  .cap-row:last-child{border-bottom:none;}
+  .cap-row:hover{background:#F8F8F6;}
+  .cap-row .lvl{font-family:var(--mono);font-size:13px;color:var(--muted);}
+  .cap-row .arrow{color:var(--muted);font-size:15px;}
+
+  .work-list{margin:0;padding-left:18px;color:var(--muted);}
+  .work-list li{margin-bottom:6px;font-size:14px;}
+
+  /* ---------- evidence ---------- */
+  .evidence-layout{display:grid;grid-template-columns:200px 1fr;gap:1px;background:var(--line);border:1px solid var(--line);}
+  @media (max-width:560px){.evidence-layout{grid-template-columns:1fr;}}
+  .evidence-nav{background:var(--panel);}
+  .evidence-nav button{
+    display:block;width:100%;text-align:left;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--line);
+    font-family:inherit;font-size:13.5px;color:var(--muted);
+  }
+  .evidence-nav button.active{color:var(--ink);font-weight:600;background:var(--canvas);}
+  .evidence-nav button:hover{background:#F8F8F6;}
+  .evidence-detail{background:var(--panel);padding:26px;}
+  .evidence-detail h3{margin:0 0 4px;font-size:18px;}
+  .ev-meta{display:flex;gap:18px;margin:12px 0 20px;font-size:13.5px;color:var(--muted);flex-wrap:wrap;}
+  .ev-meta b{color:var(--ink);font-family:var(--mono);font-weight:600;}
+  ul.ev-list{list-style:none;margin:0;padding:0;}
+  ul.ev-list li{padding:9px 0;border-top:1px solid var(--line);font-size:14px;display:flex;gap:10px;}
+  ul.ev-list li:first-child{border-top:none;}
+  .sym{font-family:var(--mono);font-weight:600;flex:0 0 auto;}
+  .sym.ok{color:var(--ready);}
+  .sym.warn{color:var(--reskill);}
+  .sym.gap{color:var(--review);}
+
+  /* ---------- future work ---------- */
+  .fw-list{display:flex;flex-direction:column;gap:14px;}
+  .fw-card{
+    border:1px solid var(--line);background:var(--panel);padding:20px 22px;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+    text-align:left;width:100%;font-family:inherit;
+  }
+  .fw-card:hover{border-color:var(--line-strong);}
+  .fw-card .fw-name{font-size:15.5px;font-weight:600;margin-bottom:5px;}
+  .fw-card .fw-match{font-size:13px;color:var(--muted);font-family:var(--mono);}
+  .fw-card .arrow{color:var(--muted);font-size:18px;}
+
+  /* ---------- gap page ---------- */
+  .gap-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:20px;}
+  @media (max-width:760px){.gap-grid{grid-template-columns:1fr;}}
+  .req-list{list-style:none;margin:0;padding:0;}
+  .req-list li{padding:11px 0;border-top:1px solid var(--line);display:flex;gap:10px;font-size:14.5px;}
+  .req-list li:first-child{border-top:none;}
+  .analysis-row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:14px;}
+  .analysis-row:first-child{border-top:none;}
+  .analysis-row b{font-family:var(--mono);}
+  .rec-box{padding:18px;margin-top:16px;border:1px solid var(--line-strong);}
+  .rec-box .rec-label{font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .rec-box .rec-step{font-size:13.5px;color:var(--muted);margin-top:10px;}
+
+  /* ---------- validation ---------- */
+  .checklist{list-style:none;margin:0 0 22px;padding:0;border:1px solid var(--line);background:var(--panel);}
+  .checklist li{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;font-size:14.5px;align-items:center;}
+  .checklist li:last-child{border-bottom:none;}
+  .status-block{display:flex;gap:28px;flex-wrap:wrap;margin-bottom:22px;}
+  .status-block .item{display:flex;flex-direction:column;gap:4px;}
+  .status-block .item .l{font-size:12px;color:var(--muted);}
+  .status-block .item .v{font-family:var(--mono);font-weight:600;font-size:15px;}
+  .final-message{
+    border-top:1px solid var(--line);margin-top:26px;padding-top:18px;
+    font-size:13.5px;color:var(--muted);font-style:normal;
+  }
+
+  /* loop closure success state */
+  .success-box{border:1px solid var(--ready);background:var(--ready-bg);padding:22px;margin-top:4px;}
+  .success-box .head{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--ready);font-size:15.5px;margin-bottom:8px;}
+  .success-box .head .check{
+    width:22px;height:22px;border-radius:50%;background:var(--ready);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto;font-family:var(--mono);
+  }
+  .success-box p{margin:0 0 18px;color:#3B5C55;font-size:13.5px;max-width:520px;}
+
+  /* toast */
+  #toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:12px 20px;border-radius:4px;font-size:13.5px;
+    opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;
+    z-index:50;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:640px){
+    header.topbar{padding:16px 18px;}
+    .shell{padding:0 16px 60px;}
+    .crumbs{padding:10px 18px;}
+    .fact-row{grid-template-columns:1fr;}
+    .cap-row{grid-template-columns:1fr 70px 26px;}
+    .cap-row .conf-col{display:none;}
+    .disclaimer{text-align:left;max-width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">DST</span>
+    <div>
+      <h1>Workforce Capability Navigator</h1>
+      <div class="sub">Field Metering &amp; Manual Operations</div>
+    </div>
+  </div>
+  <div class="disclaimer">Decision-support tool. It does not make employment decisions.</div>
+</header>
+
+<div id="crumbs-wrap"></div>
+
+<div class="shell">
+  <main id="app"></main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   DATA MODEL — deterministic seeded generation.
+   All figures below are fictional / illustrative except the
+   case facts explicitly marked FACT.
+   ============================================================ */
+
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const rng = mulberry32(20240612);
+const pick = (arr) => arr[Math.floor(rng()*arr.length)];
+const pickN = (arr,n) => { const c=[...arr]; const out=[]; for(let i=0;i<n && c.length;i++){ out.push(c.splice(Math.floor(rng()*c.length),1)[0]); } return out; };
+const randInt = (a,b) => a + Math.floor(rng()*(b-a+1));
+
+const CAPABILITIES = ["Equipment Handling","Field Operations","Digital Tools","Safety Compliance","Data Recording","Customer Communication","Diagnostic Troubleshooting","Route Planning","Regulatory Documentation","Remote Monitoring Systems"];
+const REGIONS = ["Region A","Region B","Region C","Region D"];
+const JOB_TITLES = ["Metering Technician","Field Operations Officer","Senior Field Technician","Meter Reader","Field Support Analyst","Installation Technician"];
+
+const CURRENT_WORK_BANK = {
+  "Metering Technician":["Manual meter reads on assigned routes","Routine equipment inspection and calibration","Fault reporting via paper log sheets"],
+  "Field Operations Officer":["Coordinating daily field crew schedules","On-site safety checks at customer premises","Escalating equipment faults to regional office"],
+  "Senior Field Technician":["Diagnosing recurring equipment faults","Mentoring junior technicians on-route","Reviewing calibration records for compliance"],
+  "Meter Reader":["Manual meter reads on assigned routes","Recording readings on handheld device","Flagging visibly damaged equipment"],
+  "Field Support Analyst":["Logging field incident reports","Supporting technicians with parts requests","Maintaining regional equipment inventory"],
+  "Installation Technician":["Installing and commissioning new meters","Testing connections against safety standard","Customer walkthroughs at install completion"]
+};
+
+const EVIDENCE_STRONG = ["Recent work record","Certification current","System usage log"];
+const EVIDENCE_MED = ["Training completed","Manager validation pending","Cross-training record"];
+const EVIDENCE_WEAK = ["Historical role record (3+ yrs old)","No recent activity logged","Assessment on file (outdated)"];
+
+function genCapability(name){
+  const tier = pick(["High","High","Medium","Medium","Medium","Low"]);
+  let level, evidence;
+  if(tier==="High"){ level = randInt(3,5); evidence = pickN(EVIDENCE_STRONG, randInt(2,3)); }
+  else if(tier==="Medium"){ level = randInt(2,4); evidence = [pick(EVIDENCE_STRONG), ...pickN(EVIDENCE_MED,1)]; }
+  else { level = randInt(1,2); evidence = pickN(EVIDENCE_WEAK, randInt(1,2)); }
+  return { name, level, confidence: tier, evidence };
+}
+
+const FUTURE_WORK = [
+  { id:"A", name:"Remote Systems Monitoring Technician", required:["Digital Tools","Remote Monitoring Systems","Data Recording","Diagnostic Troubleshooting","Safety Compliance"] },
+  { id:"B", name:"Field Operations Supervisor", required:["Equipment Handling","Field Operations","Safety Compliance","Route Planning"] },
+  { id:"C", name:"Customer Systems Specialist", required:["Customer Communication","Digital Tools","Data Recording"] }
+];
+
+function buildEmployees(n){
+  const list = [];
+  for(let i=1;i<=n;i++){
+    const jobTitle = pick(JOB_TITLES);
+    const region = pick(REGIONS);
+    const capCount = randInt(3,5);
+    const capNames = pickN(CAPABILITIES, capCount);
+    const capabilities = capNames.map(genCapability);
+    const currentWork = CURRENT_WORK_BANK[jobTitle];
+
+    list.push({
+      id: "EMP-" + String(i).padStart(3,"0"),
+      label: "Employee " + String(i).padStart(3,"0"),
+      jobTitle, region, currentWork, capabilities
+    });
+  }
+  return list;
+}
+
+const EMPLOYEES = buildEmployees(38);
+
+function empHasCap(emp, capName){
+  return emp.capabilities.find(c => c.name === capName) || null;
+}
+
+function matchFutureWork(emp, fw){
+  const rows = fw.required.map(reqName => {
+    const c = empHasCap(emp, reqName);
+    let status;
+    if(!c) status = "gap";
+    else if(c.confidence === "High") status = "confirmed";
+    else status = "needs-validation";
+    return { name: reqName, status, cap: c };
+  });
+  const confirmed = rows.filter(r=>r.status==="confirmed").length;
+  const needsValidation = rows.filter(r=>r.status==="needs-validation").length;
+  const gap = rows.filter(r=>r.status==="gap").length;
+  return { fw, rows, confirmed, needsValidation, gap, total: fw.required.length };
+}
+
+function bestMatch(emp){
+  const matches = FUTURE_WORK.map(fw => matchFutureWork(emp, fw));
+  matches.sort((a,b) => (b.confirmed - a.confirmed) || (a.gap - b.gap) || (a.needsValidation - b.needsValidation));
+  return matches[0];
+}
+
+function recommendationFor(match, emp){
+  if(emp.capabilities.length < 3) return "REVIEW";
+  if(match.gap === 0 && match.needsValidation === 0) return "READY";
+  if(match.gap <= 1) return "RESKILL";
+  return "REVIEW";
+}
+
+EMPLOYEES.forEach(emp => {
+  const m = bestMatch(emp);
+  emp._bestMatch = m;
+  emp._recommendation = recommendationFor(m, emp);
+  const avgConf = emp.capabilities.reduce((s,c)=> s + (c.confidence==="High"?3:c.confidence==="Medium"?2:1), 0) / emp.capabilities.length;
+  emp._overallConfidence = avgConf >= 2.5 ? "High" : avgConf >= 1.6 ? "Medium" : "Low";
+});
+
+/* ============================================================
+   STATE + ROUTING
+   Top-level pages:  overview | exposure | employees | employee
+   "employee" is the master-detail container; state.detailTab
+   selects which of the 5 employee-scoped views is shown inside it.
+   ============================================================ */
+const state = {
+  page: "overview",
+  employeeId: null,
+  detailTab: "profile",   // profile | evidence | futurework | gap | validation
+  futureWorkId: null,
+  capabilityName: null,
+  regionFilter: "all",
+  pathFilter: "all",
+  decisions: {}            // employeeId -> {status}
+};
+
+const DETAIL_STEPS = [
+  { key:"profile",    label:"Profile" },
+  { key:"evidence",   label:"Evidence" },
+  { key:"futurework", label:"Future Work" },
+  { key:"gap",        label:"Gap" },
+  { key:"validation", label:"Validation" }
+];
+
+function currentEmployee(){ return EMPLOYEES.find(e=>e.id===state.employeeId) || null; }
+function currentFutureWork(){ return FUTURE_WORK.find(f=>f.id===state.futureWorkId) || null; }
+
+/* top-level navigation: overview / exposure / employees.
+   Leaving employee context always clears it, so re-entering starts clean. */
+function go(page){
+  state.page = page;
+  state.employeeId = null;
+  state.detailTab = "profile";
+  state.futureWorkId = null;
+  state.capabilityName = null;
+  renderApp();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* enter the master-detail employee view from the directory */
+function openEmployee(id){
+  state.page = "employee";
+  state.employeeId = id;
+  state.detailTab = "profile";
+  state.futureWorkId = null;
+  state.capabilityName = null;
+  renderApp();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* move between sub-views inside an already-open employee, without
+   leaving the master-detail container or losing employee context */
+function setDetailTab(tab, patch={}){
+  Object.assign(state, patch);
+  state.detailTab = tab;
+  renderApp();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=> t.classList.remove("show"), 2600);
+}
+
+/* ============================================================
+   BREADCRUMB — reflects real context hierarchy, not a tab bar.
+   Absent entirely on the standalone Overview landing page.
+   ============================================================ */
+function renderCrumbs(){
+  const wrap = document.getElementById("crumbs-wrap");
+  if(state.page === "overview"){ wrap.innerHTML = ""; return; }
+
+  const parts = [{ label:"Workforce Overview", action:()=>go("overview") }];
+  parts.push({ label:"Field Metering Exposure", action:()=>go("exposure") });
+
+  if(state.page === "employees"){
+    parts.push({ label:"Affected Employees", current:true });
+  }
+  if(state.page === "employee"){
+    parts.push({ label:"Affected Employees", action:()=>go("employees") });
+    const emp = currentEmployee();
+    const stepLabel = (DETAIL_STEPS.find(s=>s.key===state.detailTab) || DETAIL_STEPS[0]).label;
+    parts.push({ label: emp ? emp.label : "Employee", action:()=>setDetailTab("profile") });
+    parts.push({ label: stepLabel, current:true });
+  }
+
+  const html = parts.map((p,i)=>{
+    const sep = i>0 ? `<span class="sep">/</span>` : "";
+    if(p.current) return `${sep}<span class="current">${p.label}</span>`;
+    return `${sep}<button data-crumb="${i}">${p.label}</button>`;
+  }).join("");
+
+  wrap.innerHTML = `<div class="crumbs">${html}</div>`;
+  wrap.querySelectorAll("button[data-crumb]").forEach(b=>{
+    b.addEventListener("click", ()=> parts[+b.dataset.crumb].action());
+  });
+}
+
+/* ============================================================
+   PAGE 1 — Overview (standalone, normal button routing)
+   ============================================================ */
+function pageOverview(){
+  return `
+  <h2 class="page-title">Workforce Transformation Overview</h2>
+  <p class="page-lede">A cross-workforce view of where automation is changing work, and where people can move next.</p>
+
+  <div class="fact-row">
+    <div class="fact"><span class="tag fact" style="margin-bottom:8px;display:inline-block">CASE FACT</span><span class="num">52,000</span><span class="label">Employees</span></div>
+    <div class="fact"><span class="tag fact" style="margin-bottom:8px;display:inline-block">CASE FACT</span><span class="num">1,800+</span><span class="label">Job titles</span></div>
+    <div class="fact"><span class="tag fact" style="margin-bottom:8px;display:inline-block">CASE FACT</span><span class="num">45%</span><span class="label">Skill records blank</span></div>
+  </div>
+
+  <div class="panel">
+    <h3>Field Metering &amp; Manual Operations</h3>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 16px;">The area under active review. Roughly 70% of its work is expected to be automatable within 18 months — a signal to plan for, not a signal that people are unneeded.</p>
+    <div class="btn-group">
+      <button class="btn" id="btn-explore">Explore Field Metering</button>
+    </div>
+  </div>
+
+  <p class="note">4,200 roles' worth of disappearing work does not immediately translate into 4,200 people without a future. This tool traces what one affected employee can do, how confident the evidence is, and where that capability could go next.</p>
+  `;
+}
+function wireOverview(){
+  document.getElementById("btn-explore").addEventListener("click", ()=> go("exposure"));
+}
+
+/* ============================================================
+   PAGE 2 — Exposure (standalone, normal button routing)
+   ============================================================ */
+function pageExposure(){
+  return `
+  <button class="back-link" id="btn-back-overview">‹ Workforce Overview</button>
+  <h2 class="page-title">Field Metering &amp; Manual Operations</h2>
+  <p class="page-lede">The app first identifies what work is changing, before deciding what happens to employees.</p>
+
+  <div class="fact-row">
+    <div class="fact"><span class="num">~6,000</span><span class="label">Employees in this area</span></div>
+    <div class="fact"><span class="num">~70%</span><span class="label">Work automatable within 18 months</span></div>
+    <div class="fact tone-review"><span class="num">~4,200</span><span class="label">Roles' worth of work affected</span></div>
+  </div>
+
+  <div class="panel">
+    <h3>Illustrative tasks under exposure <span class="tag illustrative" style="margin-left:6px;">Illustrative / Requires Validation</span></h3>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 4px;">The case does not specify exact tasks being automated. These examples show the kind of work involved — they are not confirmed figures.</p>
+    <ul class="illustrative-list">
+      <li><span>Manual meter reads on fixed routes</span><span class="tag illustrative">Illustrative</span></li>
+      <li><span>Paper-based field inspection logs</span><span class="tag illustrative">Illustrative</span></li>
+      <li><span>Routine, low-complexity equipment checks</span><span class="tag illustrative">Illustrative</span></li>
+    </ul>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn" id="btn-view-workforce">View affected workforce</button>
+  </div>
+  `;
+}
+function wireExposure(){
+  document.getElementById("btn-back-overview").addEventListener("click", ()=> go("overview"));
+  document.getElementById("btn-view-workforce").addEventListener("click", ()=> go("employees"));
+}
+
+/* ============================================================
+   PAGE 3 — Affected Employees (top-level directory / master list)
+   ============================================================ */
+function pathBadge(path){
+  const cls = path==="READY"?"ready":path==="RESKILL"?"reskill":"review";
+  return `<span class="badge ${cls}"><span class="dot"></span>${path}</span>`;
+}
+
+function pageEmployees(){
+  let list = EMPLOYEES.filter(e=>{
+    if(state.regionFilter!=="all" && e.region!==state.regionFilter) return false;
+    if(state.pathFilter!=="all" && e._recommendation!==state.pathFilter) return false;
+    return true;
+  });
+
+  const rows = list.map(e=>{
+    const m = e._bestMatch;
+    return `<tr data-emp="${e.id}">
+      <td>${e.label}</td>
+      <td>${e.jobTitle}</td>
+      <td>${e.region}</td>
+      <td class="mono">${m.confirmed}/${m.total}</td>
+      <td><span class="conf ${e._overallConfidence}">${e._overallConfidence}</span></td>
+      <td>${pathBadge(e._recommendation)}</td>
+    </tr>`;
+  }).join("");
+
+  return `
+  <button class="back-link" id="btn-back-exposure">‹ Field Metering Exposure</button>
+  <h2 class="page-title">Affected Workforce</h2>
+  <p class="page-lede">${list.length} of ${EMPLOYEES.length} fictional employee records shown. Select any employee to open their capability profile.</p>
+
+  <div class="filters">
+    <select id="f-region">
+      <option value="all">All regions</option>
+      ${REGIONS.map(r=>`<option value="${r}" ${state.regionFilter===r?"selected":""}>${r}</option>`).join("")}
+    </select>
+    <select id="f-path">
+      <option value="all">All pathways</option>
+      <option value="READY" ${state.pathFilter==="READY"?"selected":""}>Ready</option>
+      <option value="RESKILL" ${state.pathFilter==="RESKILL"?"selected":""}>Reskill</option>
+      <option value="REVIEW" ${state.pathFilter==="REVIEW"?"selected":""}>Review</option>
+    </select>
+    <span class="count">${list.length} shown</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Employee</th><th>Current role</th><th>Region</th><th>Capability coverage</th><th>Confidence</th><th>Path</th>
+      </tr></thead>
+      <tbody>${rows || `<tr><td colspan="6" style="color:var(--muted);">No employees match this filter.</td></tr>`}</tbody>
+    </table>
+  </div>
+  `;
+}
+
+function wireEmployeesPage(){
+  document.getElementById("btn-back-exposure").addEventListener("click", ()=> go("exposure"));
+  document.querySelectorAll("tbody tr[data-emp]").forEach(tr=>{
+    tr.addEventListener("click", ()=> openEmployee(tr.dataset.emp));
+  });
+  const fr = document.getElementById("f-region");
+  const fp = document.getElementById("f-path");
+  if(fr) fr.addEventListener("change", e=>{ state.regionFilter = e.target.value; renderApp(); });
+  if(fp) fp.addEventListener("change", e=>{ state.pathFilter = e.target.value; renderApp(); });
+}
+
+/* ============================================================
+   PAGES 4–8 — Employee master-detail container
+   Sidebar (contextual stepper) only exists here, scoped to one
+   employee. It never appears as a global top-level tab.
+   ============================================================ */
+function emptyDetailState(tabKey, msg){
+  return `
+  <div class="panel" style="text-align:center;padding:50px 24px;">
+    <p style="color:var(--muted);margin:0 0 16px;">${msg}</p>
+    <button class="btn" data-empty-goto="${tabKey}">Go there</button>
+  </div>`;
+}
+
+function subProfile(emp){
+  const capRows = emp.capabilities.map(c=>`
+    <button class="cap-row" data-cap="${c.name}">
+      <span>${c.name}</span>
+      <span class="lvl">Level ${c.level}/5</span>
+      <span class="conf conf-col ${c.confidence}">${c.confidence}</span>
+      <span class="arrow">›</span>
+    </button>
+  `).join("");
+
+  return `
+  <div class="sub-head">
+    <div>
+      <div class="ctx">${emp.id}</div>
+      <h2 class="page-title" style="margin-bottom:2px;">${emp.jobTitle}</h2>
+      <div class="meta-line">${emp.region}</div>
+    </div>
+    ${pathBadge(emp._recommendation)}
+  </div>
+
+  <div class="panel">
+    <h3>Current work</h3>
+    <ul class="work-list">${emp.currentWork.map(w=>`<li>${w}</li>`).join("")}</ul>
+  </div>
+
+  <div class="panel">
+    <h3>What this employee can do</h3>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 14px;">Capability level and confidence are tracked separately. Select a capability to see the supporting evidence.</p>
+    <div class="cap-list">${capRows}</div>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn" id="btn-see-evidence">See evidence</button>
+  </div>
+  `;
+}
+function wireSubProfile(emp){
+  document.querySelectorAll(".cap-row[data-cap]").forEach(b=>{
+    b.addEventListener("click", ()=> setDetailTab("evidence", { capabilityName: b.dataset.cap }));
+  });
+  document.getElementById("btn-see-evidence").addEventListener("click", ()=>{
+    setDetailTab("evidence", { capabilityName: emp.capabilities[0].name });
+  });
+}
+
+function subEvidence(emp){
+  const activeName = state.capabilityName || emp.capabilities[0].name;
+  const active = empHasCap(emp, activeName) || emp.capabilities[0];
+
+  const navBtns = emp.capabilities.map(c=>`
+    <button class="${c.name===active.name?'active':''}" data-cap="${c.name}">${c.name}</button>
+  `).join("");
+
+  const evItems = active.evidence.map(ev=>{
+    const isWeak = EVIDENCE_WEAK.includes(ev);
+    const sym = isWeak ? `<span class="sym warn">△</span>` : `<span class="sym ok">✓</span>`;
+    return `<li>${sym}<span>${ev}</span></li>`;
+  }).join("");
+
+  const validationLine = active.confidence === "High"
+    ? "No further validation required to use this evidence."
+    : active.confidence === "Medium"
+      ? "Confirm current work activity with direct manager."
+      : "Requires updated assessment — existing evidence is old or incomplete.";
+
+  return `
+  <div class="sub-head">
+    <div>
+      <h2 class="page-title" style="margin-bottom:2px;">Why does the app believe this?</h2>
+      <div class="ctx">${emp.label} · ${emp.jobTitle}</div>
+    </div>
+  </div>
+
+  <div class="evidence-layout">
+    <div class="evidence-nav">${navBtns}</div>
+    <div class="evidence-detail">
+      <h3>${active.name}</h3>
+      <div class="ev-meta">
+        <span>Level <b>${active.level} / 5</b></span>
+        <span>Confidence <b class="conf ${active.confidence}" style="font-family:var(--mono)">${active.confidence}</b></span>
+      </div>
+      <ul class="ev-list">${evItems}</ul>
+      <p class="note" style="margin-top:18px;">${validationLine}</p>
+    </div>
+  </div>
+
+  <div class="btn-group" style="margin-top:20px;">
+    <button class="btn" id="btn-find-future">Find future opportunities</button>
+  </div>
+  `;
+}
+function wireSubEvidence(emp){
+  document.querySelectorAll(".evidence-nav button[data-cap]").forEach(b=>{
+    b.addEventListener("click", ()=> setDetailTab("evidence", { capabilityName: b.dataset.cap }));
+  });
+  document.getElementById("btn-find-future").addEventListener("click", ()=> setDetailTab("futurework"));
+}
+
+function subFutureWork(emp){
+  const cards = FUTURE_WORK.map(fw=>{
+    const m = matchFutureWork(emp, fw);
+    const rec = recommendationFor(m, emp);
+    return `<button class="fw-card" data-fw="${fw.id}">
+      <div>
+        <div class="fw-name">${fw.name}</div>
+        <div class="fw-match">${m.confirmed}/${m.total} capabilities confirmed · ${m.needsValidation} need validation · ${m.gap} gap</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        ${pathBadge(rec)}
+        <span class="arrow">›</span>
+      </div>
+    </button>`;
+  }).join("");
+
+  return `
+  <div class="sub-head">
+    <div>
+      <h2 class="page-title" style="margin-bottom:2px;">Where could ${emp.label} move next?</h2>
+      <div class="ctx">Illustrative future-work opportunities <span class="tag illustrative" style="margin-left:4px;">Illustrative / Requires Validation</span></div>
+    </div>
+  </div>
+
+  <div class="fw-list">${cards}</div>
+  `;
+}
+function wireSubFutureWork(){
+  document.querySelectorAll(".fw-card[data-fw]").forEach(b=>{
+    b.addEventListener("click", ()=> setDetailTab("gap", { futureWorkId: b.dataset.fw }));
+  });
+}
+
+function subGap(emp){
+  const fw = currentFutureWork();
+  if(!fw) return emptyDetailState("futurework","Select a future-work opportunity first.");
+
+  const match = matchFutureWork(emp, fw);
+  const rec = recommendationFor(match, emp);
+
+  const reqItems = match.rows.map(r=>{
+    const sym = r.status==="confirmed" ? `<span class="sym ok">✓</span>` : r.status==="needs-validation" ? `<span class="sym warn">△</span>` : `<span class="sym gap">✕</span>`;
+    const suffix = r.status==="needs-validation" ? " — needs validation" : r.status==="gap" ? " — gap" : "";
+    return `<li>${sym}<span>${r.name}${suffix}</span></li>`;
+  }).join("");
+
+  const nextStep = rec==="READY" ? "Confirm assignment and proceed with transition planning."
+    : rec==="RESKILL" ? "Training + practical assessment + manager validation."
+    : "Additional evidence and validation required before a pathway can be recommended.";
+
+  return `
+  <div class="sub-head">
+    <div>
+      <h2 class="page-title" style="margin-bottom:2px;">What is missing?</h2>
+      <div class="ctx">${emp.label} → ${fw.name}</div>
+    </div>
+  </div>
+
+  <div class="gap-grid">
+    <div class="panel">
+      <h3>Required capabilities</h3>
+      <ul class="req-list">${reqItems}</ul>
+    </div>
+    <div class="panel">
+      <h3>Analysis</h3>
+      <div class="analysis-row"><span>Confirmed</span><b>${match.confirmed}</b></div>
+      <div class="analysis-row"><span>Needs validation</span><b>${match.needsValidation}</b></div>
+      <div class="analysis-row"><span>Gap</span><b>${match.gap}</b></div>
+
+      <div class="rec-box">
+        <div class="rec-label">Recommended pathway</div>
+        ${pathBadge(rec)}
+        <div class="rec-step">${nextStep}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group" style="margin-top:8px;">
+    <button class="btn" id="btn-validate">Validate pathway</button>
+  </div>
+  `;
+}
+function wireSubGap(){
+  const b = document.getElementById("btn-validate");
+  if(b) b.addEventListener("click", ()=> setDetailTab("validation"));
+}
+
+function subValidation(emp){
+  const fw = currentFutureWork();
+  if(!fw) return emptyDetailState("futurework","Select a future-work opportunity first.");
+
+  const match = matchFutureWork(emp, fw);
+  const rec = recommendationFor(match, emp);
+  const decision = state.decisions[emp.id];
+
+  const items = [
+    { label:"Current work confirmed", s:"done" },
+    { label:"Evidence reviewed", s:"done" },
+    { label:"Future-work requirement confirmed", s: match.gap+match.needsValidation===0 ? "done":"partial" },
+    { label:"Reskilling feasibility confirmed", s: rec==="RESKILL" ? "partial" : rec==="READY" ? "done" : "open" },
+    { label:"Employee assessment completed", s: decision ? "done" : "open" }
+  ];
+  const sym = s => s==="done" ? `<span class="sym ok">✓</span>` : s==="partial" ? `<span class="sym warn">△</span>` : `<span class="sym gap">□</span>`;
+
+  const actionArea = decision ? `
+    <div class="success-box">
+      <div class="head"><span class="check">✓</span>${decision.status}</div>
+      <p>${emp.label}'s pathway record has been updated. AI recommends, people validate, management decides — this closes the loop for this employee.</p>
+      <div class="btn-group">
+        <button class="btn" id="btn-return-list">Return to Employee List</button>
+        <button class="btn secondary" id="btn-return-dashboard">Back to Dashboard</button>
+      </div>
+    </div>
+  ` : `
+    <div class="btn-group">
+      <button class="btn" data-action="confirm">Confirm pathway</button>
+      <button class="btn secondary" data-action="reassess">Request reassessment</button>
+      <button class="btn secondary" data-action="flag">Flag for review</button>
+    </div>
+  `;
+
+  return `
+  <div class="sub-head">
+    <div>
+      <h2 class="page-title" style="margin-bottom:2px;">Validate before deciding</h2>
+      <div class="ctx">${emp.label} → ${fw.name}</div>
+    </div>
+  </div>
+
+  <div class="status-block">
+    <div class="item"><span class="l">Recommendation</span><span class="v">${rec}</span></div>
+    <div class="item"><span class="l">Confidence</span><span class="v">${emp._overallConfidence}</span></div>
+    <div class="item"><span class="l">Decision</span><span class="v">${decision ? decision.status : "Pending validation"}</span></div>
+  </div>
+
+  <ul class="checklist">
+    ${items.map(i=>`<li>${sym(i.s)}<span>${i.label}</span></li>`).join("")}
+  </ul>
+
+  ${actionArea}
+
+  <p class="final-message">AI recommends. People validate. Management decides. This app supports the decision — it does not make the employment decision.</p>
+  `;
+}
+function wireSubValidation(emp){
+  document.querySelectorAll("[data-action]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const map = { confirm:"Pathway confirmed", reassess:"Reassessment requested", flag:"Flagged for review" };
+      state.decisions[emp.id] = { status: map[b.dataset.action] };
+      toast(map[b.dataset.action] + " for " + emp.label + ".");
+      renderApp();
+    });
+  });
+  const listBtn = document.getElementById("btn-return-list");
+  const dashBtn = document.getElementById("btn-return-dashboard");
+  if(listBtn) listBtn.addEventListener("click", ()=> go("employees"));
+  if(dashBtn) dashBtn.addEventListener("click", ()=> go("overview"));
+}
+
+function pageEmployeeDetail(){
+  const emp = currentEmployee();
+  if(!emp){
+    return `<div class="panel" style="text-align:center;padding:50px 24px;">
+      <p style="color:var(--muted);margin:0 0 16px;">No employee selected.</p>
+      <button class="btn" id="btn-empty-to-employees">Go to Affected Employees</button>
+    </div>`;
+  }
+
+  const idx = DETAIL_STEPS.findIndex(s=>s.key===state.detailTab);
+  const sidebarSteps = DETAIL_STEPS.map((s,i)=>{
+    let cls = "";
+    const locked = (s.key==="gap" || s.key==="validation") && !state.futureWorkId && i>idx;
+    if(i<idx) cls = "done";
+    else if(i===idx) cls = "active";
+    else if(locked) cls = "locked";
+    return `<button class="${cls}" ${locked?"disabled":""} data-step="${s.key}">
+      <span class="num">${i+1}</span><span>${s.label}</span>
+    </button>`;
+  }).join("");
+
+  let content;
+  switch(state.detailTab){
+    case "profile": content = subProfile(emp); break;
+    case "evidence": content = subEvidence(emp); break;
+    case "futurework": content = subFutureWork(emp); break;
+    case "gap": content = subGap(emp); break;
+    case "validation": content = subValidation(emp); break;
+    default: content = subProfile(emp);
+  }
+
+  return `
+  <div class="emp-shell">
+    <aside class="emp-sidebar">
+      <button class="exit" id="btn-exit-directory">‹ Back to Affected Employees</button>
+      <div class="emp-summary">
+        <div class="eid">${emp.id}</div>
+        <div class="ename">${emp.jobTitle}</div>
+        <div class="erole">${emp.region}</div>
+        ${pathBadge(emp._recommendation)}
+      </div>
+      <div class="emp-vsteps">${sidebarSteps}</div>
+    </aside>
+    <div class="emp-content">${content}</div>
+  </div>
+  `;
+}
+
+function wireEmployeeDetail(){
+  const emp = currentEmployee();
+  const exitBtn = document.getElementById("btn-exit-directory");
+  if(exitBtn) exitBtn.addEventListener("click", ()=> go("employees"));
+  const emptyBtn = document.getElementById("btn-empty-to-employees");
+  if(emptyBtn) emptyBtn.addEventListener("click", ()=> go("employees"));
+  if(!emp) return;
+
+  document.querySelectorAll(".emp-vsteps button[data-step]").forEach(b=>{
+    b.addEventListener("click", ()=> setDetailTab(b.dataset.step));
+  });
+  document.querySelectorAll("[data-empty-goto]").forEach(b=>{
+    b.addEventListener("click", ()=> setDetailTab(b.dataset.emptyGoto));
+  });
+
+  if(state.detailTab==="profile") wireSubProfile(emp);
+  if(state.detailTab==="evidence") wireSubEvidence(emp);
+  if(state.detailTab==="futurework") wireSubFutureWork();
+  if(state.detailTab==="gap") wireSubGap();
+  if(state.detailTab==="validation") wireSubValidation(emp);
+}
+
+/* ============================================================
+   MASTER RENDER
+   ============================================================ */
+function renderApp(){
+  renderCrumbs();
+  const app = document.getElementById("app");
+  switch(state.page){
+    case "overview": app.innerHTML = pageOverview(); wireOverview(); break;
+    case "exposure": app.innerHTML = pageExposure(); wireExposure(); break;
+    case "employees": app.innerHTML = pageEmployees(); wireEmployeesPage(); break;
+    case "employee": app.innerHTML = pageEmployeeDetail(); wireEmployeeDetail(); break;
+    default: app.innerHTML = pageOverview(); wireOverview();
+  }
+}
+
+renderApp();
+</script>
+</body>
+</html>
